@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: "semperti-cerebro-0.8.3"
+  annotations:
+    openshift.io/display-name: Semperti Cerebro 0.8.3 
+    iconClass: icon-codeigniter
+    description: Cerebro para visualizacion de cluster de elasticsearch
+objects:
+#Deployment:
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    name: ${DEPLOYMENT_NAME}-cer
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: ${DEPLOYMENT_NAME}-cer
+        tier: cerebro
+        project: ${DEPLOYMENT_NAME}
+    template:
+      metadata:
+        labels:
+          app: ${DEPLOYMENT_NAME}-cer
+          tier: cerebro
+          project: ${DEPLOYMENT_NAME}
+      spec:
+        containers:
+          - name: cerebro
+            image: ${CER_IMAGE}
+            imagePullPolicy: Always
+            ports:
+              - containerPort: 9000
+                name: http
+                protocol: TCP
+            resources:
+              limits:
+              cpu: "1"
+            requests:
+              cpu: 100m
+            terminationMessagePath: /dev/termination-log
+        serviceAccount: semperuser
+        serviceAccountName: semperuser
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${DEPLOYMENT_NAME}-cer
+    labels:
+      app: ${DEPLOYMENT_NAME}-cer
+      tier: cerebro
+  spec:
+    ports:
+      - name: http
+        port: 9000
+        protocol: TCP
+        targetPort: 9000
+    selector:
+      app: ${DEPLOYMENT_NAME}-cer
+      tier: cerebro 
+
+#JUST FOR TEST
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${DEPLOYMENT_NAME}-cer
+    labels:
+      app: ${DEPLOYMENT_NAME}-cer
+      tier: cerebro 
+  spec:
+    port:
+      targetPort: http
+    tls:
+      termination: edge
+    to:
+      kind: Service
+      name: ${DEPLOYMENT_NAME}-cer
+    wildcardPolicy: None
+
+parameters:
+  - name: DEPLOYMENT_NAME
+    description: Name of deployment
+    required: true
+    value: semperti
+  - name: CER_IMAGE
+    description: Image for Cerebro
+    value: docker.io/lmenezes/cerebro:0.8.3
+    required: true

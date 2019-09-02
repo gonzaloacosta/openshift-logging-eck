@@ -1,0 +1,93 @@
+apiVersion: v1
+kind: Template
+metadata:
+  name: "semperti-kibana-4.6.4"
+  annotations:
+    openshift.io/display-name: Semperti Kibana 4.6.4 
+    iconClass: icon-codeigniter
+    description: Kibana para restore de stack efk Openshift 3.9 
+objects:
+#Deployment:
+- apiVersion: extensions/v1beta1
+  kind: Deployment
+  metadata:
+    name: ${DEPLOYMENT_NAME}-kib
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: ${DEPLOYMENT_NAME}-kib
+        tier: kibana
+        project: ${DEPLOYMENT_NAME}
+    template:
+      metadata:
+        labels:
+          app: ${DEPLOYMENT_NAME}-kib
+          tier: kibana
+          project: ${DEPLOYMENT_NAME}
+      spec:
+        containers:
+          - name: kibana
+            image: ${KIB_IMAGE}
+            imagePullPolicy: Always
+            name: kibana
+            ports:
+              - containerPort: 5601
+                name: http
+                protocol: TCP
+            resources:
+              limits:
+              cpu: "1"
+            requests:
+              cpu: 100m
+            terminationMessagePath: /dev/termination-log
+          - env:
+            - name: ELASTICSEARCH_URL
+              value: http://semperti-es:9200
+        serviceAccount: semperuser
+        serviceAccountName: semperuser
+
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${DEPLOYMENT_NAME}-kib
+    labels:
+      app: ${DEPLOYMENT_NAME}-kib
+      tier: kibana
+  spec:
+    ports:
+      - name: http
+        port: 5601
+        protocol: TCP
+        targetPort: 5601
+    selector:
+      app: ${DEPLOYMENT_NAME}-kib
+      tier: kibana 
+
+#JUST FOR TEST
+- apiVersion: v1
+  kind: Route
+  metadata:
+    name: ${DEPLOYMENT_NAME}-kib
+    labels:
+      app: ${DEPLOYMENT_NAME}-kib
+      tier: kibana 
+  spec:
+    port:
+      targetPort: http
+    tls:
+      termination: edge
+    to:
+      kind: Service
+      name: ${DEPLOYMENT_NAME}-kib
+    wildcardPolicy: None
+
+parameters:
+  - name: DEPLOYMENT_NAME
+    description: Name of deployment
+    required: true
+    value: semperti
+  - name: KIB_IMAGE
+    description: Image for Kibana
+    value: docker.io/kibana:4.6.4
+    required: true
