@@ -1,4 +1,4 @@
-	# Instalacion de Elasticsearch, Kibana y Cerebro para Openshift 3.9
+# Instalacion de Elasticsearch, Kibana y Cerebro para Openshift 3.9
 
 Poder levantar en otro elasticsearch el backup de los snapshots tomados del elastisearch de Openshift 3.9.
 
