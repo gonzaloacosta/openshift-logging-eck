@@ -1,4 +1,4 @@
-# Instalacion de Elasticsearch, Kibana y Cerebro para Openshift 3.9
+	# Instalacion de Elasticsearch, Kibana y Cerebro para Openshift 3.9
 
 Poder levantar en otro elasticsearch el backup de los snapshots tomados del elastisearch de Openshift 3.9.
 
@@ -108,7 +108,9 @@ $
 dentro de el ejecutamos los curls.
 
 ### Chequeamos conectividad contra elasticsearch
+```
  curl -s -k --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key https://localhost:9200/
+```
 
 ### Definimos repo para snapshots de tipo fs
 El repo que vamos a definir en el proyecto logging y alojarálos snapshots que tomemos se llamara 'mysnapshots' pero puede tomarse cualquier
@@ -125,17 +127,25 @@ curl -s -k --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/
 ```
 
 ### Chequeamos el repo creado
+```
 curl -s -k --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key https://localhost:9200/_snapshot/mysnapshots\?pretty 
+```
 
 ### Verificamos los indices y elegimos el que deseamos backupear 
 
 Vemos todos los indices
+
+```
 $ curl -s -k --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key https://localhost:9200/_cat/indices 
+```
+
 
 El indice elegido en este caso es el que posee el nombre project.elk.55d2f587-c8ce-11e9-918e-001a4ae6ef01.2019.08.29
 
+```
 curl -s -k --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearch/secret/admin-key https://localhost:9200/project.elk.55d2f587-c8ce-11e9-918e-001a4ae6ef01.2019.08.29/_settings/?pretty
  
+```
 ### Tomamos un snapshot
 El nombre del snapshot sera snapshot_1
 
@@ -163,9 +173,13 @@ $ curl -s -k --cert /etc/elasticsearch/secret/admin-cert --key /etc/elasticsearc
 
 ### montar el volumen en el mismo filesystem
 
+```
 oc volume deployments/semperti-es --add --name=semperti-es-snapshots -t pvc --claim-name=pvc-elk-restore -m /restore
+```
 
 ### Chequeamos repo de snapshots
+
+```
 curl -XPUT http://localhost:9200/_snapshot/mysnapshots -d '{
   "type": "fs",
   "settings": {
@@ -173,8 +187,11 @@ curl -XPUT http://localhost:9200/_snapshot/mysnapshots -d '{
      "compress": true
   }
 }'
+```
 
-### Chequeamos que el repositorio haya sido creado
+### Chequeamos que el repositorio haya sido creadoo
+
+```
 curl http://localhost:9200/_snapshot/?pretty
 {
   "mysnapshots" : {
@@ -185,11 +202,12 @@ curl http://localhost:9200/_snapshot/?pretty
     }
   }
 }
-
+```
 
 
 ### Verificamos que el snapshot_1 se pueda visualizar desde el otro proyecto.
 
+```
 curl http://localhost:9200/_snapshot/mysnapshots/snapshot_1/?pretty
 {
   "snapshots" : [ {
@@ -211,31 +229,28 @@ curl http://localhost:9200/_snapshot/mysnapshots/snapshot_1/?pretty
     }
   } ]
 }
-
+```
 
 ### Realizamos restore del snapshot_1 el directorio entre los dos proyectos tiene que tener acceso de escritura para que se pueda hacer el restore.
+```
 curl -XPOST http://localhost:9200/_snapshot/mysnapshots/snapshot_1/_restore/?pretty
 {
   "accepted" : true
 }
+```
 
 ### Chequeamos que el indice haya sido restoreado.
 
 ### curl http://localhost:9200/_cat/indices/
+```
 green  open project.elk.55d2f587-c8ce-11e9-918e-001a4ae6ef01.2019.08.29 3 0 961 0 737.8kb 737.8kb
 yellow open .kibana                                                     1 1   1 0   3.1kb   3.1kb
+```
 #
 
 ### Lo podemos ver desde cerebro el estado del indice o sino consultar su contenido.
+```
 curl -X POST http://localhost:9200/project.elk.55d2f587-c8ce-11e9-918e-001a4ae6ef01.2019.08.29/_search
+```
 ....
-
-
-
-
-
-
-
-
-
 
